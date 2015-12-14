@@ -6,20 +6,21 @@
 #
 # Based on http://mpd.wikia.com/wiki/Hack:stream-monitor
 #
-PROGRAM="$(basename "$0")"
-INTERVAL=10
-LOGLEVEL=1
-LOGGER="log_stderr"
-MPDHOST=localhost
-MPDPORT=6600
+
+program="$(basename "$0")"
+interval=10
+loglevel=1
+logger="log_stderr"
+mpdhost=localhost
+mpdport=6600
 
 USAGE=$(cat <<EOF
-Usage: $PROGRAM [OPTION]...
+Usage: $program [OPTION]...
 Monitor mpd while playing internet streams.
 
-  -h HOST       MPD server host [$MPDHOST]
-  -i INTERVAL   monitoring interval in seconds [$INTERVAL]
-  -p PORT       MPD server port [$MPDPORT]
+  -h host       MPD server host [$mpdhost]
+  -i interval   monitoring interval in seconds [$interval]
+  -p port       MPD server port [$mpdport]
   -s            write log output to syslog
   -v            produce more verbose output
 EOF
@@ -33,22 +34,22 @@ log_stderr() {
 log_syslog() {
     loglevel="$1"
     shift
-    logger -t "$PROGRAM" -p "user.$loglevel" "$@"
+    logger -t "$program" -p "user.$loglevel" "$@"
 }
 
 log() {
     case $1 in
         alert|crit|emerg|err|error|warn|warning)
-            $LOGGER "$@"
+            $logger "$@"
             ;;
         notice)
-            [ $LOGLEVEL -gt 0 ] && $LOGGER "$@"
+            [ $loglevel -gt 0 ] && $logger "$@"
             ;;
         info)
-            [ $LOGLEVEL -gt 1 ] && $LOGGER "$@"
+            [ $loglevel -gt 1 ] && $logger "$@"
             ;;
         debug)
-            [ $LOGLEVEL -gt 2 ] && $LOGGER "$@"
+            [ $loglevel -gt 2 ] && $logger "$@"
             ;;
         *)
             echo "$0: invalid log level: $1"
@@ -57,25 +58,25 @@ log() {
 }
 
 mpc_status() {
-    $MPC status 2>/dev/null | grep -B1 '^\[playing\]' | tr '\n' ' '
+    $mpc status 2>/dev/null | grep -B1 '^\[playing\]' | tr '\n' ' '
 }
 
 while getopts "h::i:p:sv" opt; do
     case $opt in
         h)
-            MPDHOST=$OPTARG
+            mpdhost=$OPTARG
             ;;
         i)
-            INTERVAL=$OPTARG
+            interval=$OPTARG
             ;;
         p)
-            MPDPORT=$OPTARG
+            mpdport=$OPTARG
             ;;
         s)
-            LOGGER="log_syslog"
+            logger="log_syslog"
             ;;
         v)
-            LOGLEVEL=$(($LOGLEVEL + 1))
+            loglevel=$(($loglevel + 1))
             ;;
         *)
             echo "$USAGE" >&2
@@ -86,7 +87,7 @@ done
 
 shift $(($OPTIND - 1))
 
-MPC="mpc -h $MPDHOST -p $MPDPORT"
+mpc="mpc -h $mpdhost -p $mpdport"
 
 trap 'log notice "terminating..." ; exit' INT QUIT KILL TERM
 
@@ -94,14 +95,14 @@ log notice "starting..."
 
 prev_status=$(mpc_status)
 
-while sleep $INTERVAL; do
+while sleep $interval; do
     status=$(mpc_status)
 
     if [ -n "$status" ]; then
         log info "$status"
         if [ "$prev_status" = "$status" ]; then
             log warning "restarting mpd"
-            $MPC stop && $MPC play || log err "error restarting mpd"
+            $mpc stop && $mpc play || log err "error restarting mpd"
         fi
     else
         log debug "mpd not running/playing"
