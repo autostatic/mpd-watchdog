@@ -1,13 +1,13 @@
 Source: mpd-watchdog
-Section: main/sound
-Priority: extra
+Section: sound
+Priority: optional
 Maintainer: Thomas Kemmer <tkemmer@computer.org>
 Build-Depends: debhelper (>= 8)
 Standards-Version: 3.9.4
 Homepage: https://github.com/gitkemmer/mpd-watchdog
 
 Package: mpd-watchdog
-Architecture: all
+Architecture: any
 Depends: mpc, bsdutils, ${misc:Depends}
 Enhances: mpd, mopidy
 Description: Music player daemon (MPD/Mopidy) watchdog
